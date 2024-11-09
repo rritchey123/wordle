@@ -34,15 +34,42 @@ function GuessesContainer({ guesses, word }) {
   });
 }
 
-function GameOverContainer({ gameOver, resetGame }) {
+function isGameOver(gameStatus) {
+  return gameStatus !== "play";
+}
+
+function GameOverContainer({ gameStatus, resetGame, word }) {
   return (
-    <div className="game-over-container">
-      {gameOver && (
+    isGameOver(gameStatus) && (
+      <div className="game-over-container">
+        <h2>
+          Damn, you {gameStatus}...{" "}
+          {gameStatus === "lose" ? `It was ${word}` : ""}
+        </h2>
         <button className="reset-button" onClick={resetGame}>
           Play again?
         </button>
-      )}
-    </div>
+      </div>
+    )
+  );
+}
+
+function GuessForm({ onChangeHandler, guess, handleClick, gameStatus }) {
+  return (
+    !isGameOver(gameStatus) && (
+      <form className="guess-input-container">
+        <input
+          className="input-box"
+          type="text"
+          onChange={onChangeHandler}
+          value={guess}
+          placeholder="Enter a guess, you won't"
+        />
+        <button className="submit-button" type="submit" onClick={handleClick}>
+          Submit guess
+        </button>
+      </form>
+    )
   );
 }
 
@@ -52,7 +79,13 @@ function App() {
   const [guessIdx, setGuessIdx] = useState(0);
   const [guesses, setGuesses] = useState(DEFAULT_GUESSES);
 
-  const gameOver = guesses.includes(word);
+  const getGameStatus = () => {
+    if (guesses.includes(word)) return "win";
+    if (guessIdx === 6) return "lose";
+    return "play";
+  };
+
+  const gameStatus = getGameStatus();
 
   const fetchWord = async () => {
     try {
@@ -73,7 +106,7 @@ function App() {
 
   const handleClick = (event) => {
     event.preventDefault();
-    if (gameOver) return;
+    if (isGameOver(gameStatus)) return;
     if (guess.length !== 5) {
       alert("word must be 5 letters");
       return;
@@ -86,7 +119,7 @@ function App() {
   };
 
   const onChangeHandler = (event) => {
-    if (gameOver) return;
+    if (isGameOver(gameStatus)) return;
     setGuess(event.target.value);
   };
 
@@ -97,23 +130,17 @@ function App() {
     <>
       <h1>Not a Wordle clone</h1>
       <GuessesContainer guesses={guesses} word={word}></GuessesContainer>
-      <form className="guess-input-container">
-        <input
-          className="input-box"
-          type="text"
-          onChange={onChangeHandler}
-          value={guess}
-          placeholder="Enter a guess, you won't"
-        />
-        <button className="submit-button" type="submit" onClick={handleClick}>
-          Submit guess
-        </button>
-      </form>
+      <GuessForm
+        gameStatus={gameStatus}
+        onChangeHandler={onChangeHandler}
+        guess={guess}
+        handleClick={handleClick}
+      ></GuessForm>
       <GameOverContainer
-        gameOver={gameOver}
+        gameStatus={gameStatus}
         resetGame={resetGame}
+        word={word}
       ></GameOverContainer>
-      <h1>{word}</h1>
     </>
   );
 }
